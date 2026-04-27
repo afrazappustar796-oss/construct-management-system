@@ -90,7 +90,7 @@ router.get('/labor-costs', authMiddleware, async (req, res) => {
 
     const payments = await prisma.payment.findMany({
       where: { ...where, status: 'PAID' },
-      include: { worker: { select: { name: true } },
+      include: { worker: { select: { name: true } } },
       orderBy: { date: 'desc' }
     });
 
