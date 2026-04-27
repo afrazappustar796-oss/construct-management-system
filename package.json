@@ -2,7 +2,7 @@
   "name": "constructpro",
   "version": "1.0.0",
   "scripts": {
-    "start": "node backend/server.js"
+    "start": "node ./backend/server.js"
   },
   "dependencies": {
     "@prisma/client": "^5.8.0",
