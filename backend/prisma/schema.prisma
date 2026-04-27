@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  ACCOUNTANT
+  WORKER
+}
+
+enum WageType {
+  DAILY
+  MONTHLY
+  PIECE
+}
+
+enum TransactionType {
+  IN
+  OUT
+  TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(WORKER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects   Project[]  @relation("ProjectOwner")
+  auditLogs AuditLog[]
+}
+
+model Project {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  budget     Float
+  startDate  DateTime
+  endDate    DateTime?
+  status     String   @default("ACTIVE")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  ownerId    Int?
+  owner      User?    @relation("ProjectOwner", fields: [ownerId], references: [id])
+
+  sites      Site[]
+  expenses  Expense[]
+}
+
+model Site {
+  id         Int      @id @default(autoincrement())
+  name       String
+  location   String
+  status     String   @default("ACTIVE")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  projectId  Int
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  inventoryLogs InventoryLog[]
+  expenses    Expense[]
+  attendance Attendance[]
+}
+
+model Material {
+  id           Int      @id @default(autoincrement())
+  name         String
+  unit         String
+  costPerUnit  Float
+  minStock    Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  inventoryLogs InventoryLog[]
+}
+
+model InventoryLog {
+  id         Int             @id @default(autoincrement())
+  type       TransactionType
+  quantity   Float
+  notes      String?
+  date       DateTime        @default(now())
+  createdAt  DateTime       @default(now())
+
+  siteId     Int
+  site      Site           @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  materialId Int
+  material  Material      @relation(fields: [materialId], references: [id])
+}
+
+model Worker {
+  id          Int      @id @default(autoincrement())
+  name        String
+  role        String
+  phone       String?
+  wageType    WageType @default(DAILY)
+  wageAmount  Float
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attendance Attendance[]
+  payments   Payment[]
+}
+
+model Attendance {
+  id       Int      @id @default(autoincrement())
+  date     DateTime @default(now())
+  checkIn  DateTime?
+  checkOut DateTime?
+  status   String   @default("PRESENT")
+  createdAt DateTime @default(now())
+
+  workerId Int
+  worker  Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  siteId  Int?
+  site   Site?  @relation(fields: [siteId], references: [id])
+}
+
+model Payment {
+  id        Int           @id @default(autoincrement())
+  amount    Float
+  status    PaymentStatus @default(PENDING)
+  date      DateTime       @default(now())
+  notes     String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  workerId Int
+  worker   Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  category    String
+  amount      Float
+  description String?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  projectId  Int
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  siteId    Int?
+  site     Site?   @relation(fields: [siteId], references: [id])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  action    String
+  details   String?
+  timestamp DateTime @default(now())
+
+  userId   Int?
+  user     User?    @relation(fields: [userId], references: [id])
+}
