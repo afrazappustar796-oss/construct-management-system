@@ -3,8 +3,8 @@ services:
     name: construct-management-system
     region: oregon
     env: node
-    buildCommand: cd backend && npm install
-    startCommand: node server.js
+    buildCommand: npm install && npx prisma generate --schema=backend/prisma/schema.prisma
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
